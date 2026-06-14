@@ -1,76 +1,51 @@
-name: CI — Build & Security Scan
+name: CI
+
+# Validates the image builds on both published architectures. This is a Docker
+# repo (no application test suite) — the build itself is the check. Security
+# scanning lives in trivy.yml / gitleaks.yml / scorecard.yml; publishing lives
+# in manual_release.yml.
 
 on:
+  pull_request:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
-env:
-  REGISTRY: ghcr.io
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-scan:
+  build:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      security-events: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
-      - name: Normalize image name to lowercase
-        run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
-
-      - name: Set up QEMU (multi-platform support)
-        uses: docker/setup-qemu-action@v4
+      - name: Set up QEMU (multi-arch builds)
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
-      - name: Build Docker image (amd64)
-        uses: docker/build-push-action@v7
+      - name: Build image (amd64)
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           platforms: linux/amd64
           load: true
-          tags: ${{ env.IMAGE_NAME }}:ci
+          tags: obsidian-headless-sync-docker:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build Docker image (arm64, build-only)
-        uses: docker/build-push-action@v7
+      - name: Build image (arm64, build-only)
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
           platforms: linux/arm64
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.35.0
-        with:
-          image-ref: ${{ env.IMAGE_NAME }}:ci
-          format: sarif
-          output: trivy-results.sarif
-
-      - name: Upload Trivy SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
-        with:
-          sarif_file: trivy-results.sarif
-
-      - name: Write job summary
-        if: always()
-        run: |
-          {
-            echo "## 🔍 CI — Build & Security Scan"
-            echo ""
-            echo "| | |"
-            echo "|---|---|"
-            echo "| **Image** | \`${{ env.IMAGE_NAME }}:ci\` |"
-            echo "| **Platforms built** | \`linux/amd64\` (loaded), \`linux/arm64\` (build-only) |"
-            echo "| **Security scan** | Trivy SARIF uploaded to Security tab |"
-          } >> "$GITHUB_STEP_SUMMARY"

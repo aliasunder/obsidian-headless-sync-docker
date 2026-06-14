@@ -1,0 +1,149 @@
+name: Manual Release
+
+# Publishes the fork image on demand (no cron, no merge-to-main publish). Bumps
+# from the latest git tag, builds + pushes a multi-arch image to GHCR with SLSA
+# provenance, and cuts a GitHub release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump type
+        required: true
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+# Top-level token is read-only; each job declares the writes it needs.
+permissions:
+  contents: read
+
+jobs:
+  bump-and-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.next.outputs.version }}
+      tag: v${{ steps.next.outputs.version }}
+    steps:
+      # App token so the tag push bypasses the branch ruleset (GITHUB_TOKEN can't
+      # be added to a ruleset bypass list).
+      - name: Generate App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Calculate next version from latest tag
+        id: next
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          # No package.json in this repo — derive the current version from the
+          # latest semver tag (default 0.0.0 when none exist; the first release
+          # lands at 0.1.0 via a 'minor' bump).
+          CURRENT=$(git tag --sort=-version:refname | head -n1)
+          CURRENT=${CURRENT#v}
+          CURRENT=${CURRENT:-0.0.0}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          NEXT="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Bumping $CURRENT -> $NEXT ($BUMP)"
+
+      - name: Tag and push
+        env:
+          NEXT: ${{ steps.next.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v$NEXT"
+          git push origin "v$NEXT"
+
+  publish:
+    needs: bump-and-tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # GHCR image push
+      id-token: write # provenance attestation (Sigstore via GitHub OIDC)
+      attestations: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.bump-and-tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Normalize image name to lowercase
+        run: echo "IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Set up QEMU (multi-arch builds)
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:v${{ needs.bump-and-tag.outputs.version }}
+            ${{ env.IMAGE }}:${{ needs.bump-and-tag.outputs.version }}
+            ${{ env.IMAGE }}:latest
+          # GHCR reads a multi-arch package's description from the image *index*
+          # annotation, not a Dockerfile LABEL.
+          annotations: |
+            index:org.opencontainers.image.title=obsidian-headless-sync-docker
+            index:org.opencontainers.image.description=Headless Obsidian Sync in Docker (fork) — build-time config chown + DEVICE_NAME on initial device registration.
+            index:org.opencontainers.image.source=https://github.com/aliasunder/obsidian-headless-sync-docker
+            index:org.opencontainers.image.licenses=MIT
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+
+  release:
+    needs: [bump-and-tag, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release
+    steps:
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.bump-and-tag.outputs.tag }}
+        run: gh release create "$TAG" --title "$TAG" --generate-notes
