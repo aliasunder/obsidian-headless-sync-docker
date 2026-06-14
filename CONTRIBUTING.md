@@ -6,10 +6,11 @@ small Docker image, so the contribution loop is simple.
 ## What this is
 
 A fork of [Belphemur/obsidian-headless-sync-docker](https://github.com/Belphemur/obsidian-headless-sync-docker),
-maintained for [vault-cortex](https://github.com/aliasunder/vault-cortex), with
-two divergences from upstream: a build-time config-dir `chown` and `--device-name`
-on the initial Obsidian Sync registration. See the README "Fork notice" for the
-details and rationale.
+maintained for [vault-cortex](https://github.com/aliasunder/vault-cortex). Its two
+main divergences from upstream are a build-time config-dir `chown` and `--device-name`
+on the initial Obsidian Sync registration; it also carries its own release/publish
+pipeline and CI, with enhanced sync logging planned. See the README "Fork notice"
+for details and rationale.
 
 ## Prerequisites
 
