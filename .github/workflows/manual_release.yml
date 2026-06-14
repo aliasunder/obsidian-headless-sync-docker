@@ -54,9 +54,13 @@ jobs:
           # No package.json in this repo — derive the current version from the
           # latest semver tag (default 0.0.0 when none exist; the first release
           # lands at 0.1.0 via a 'minor' bump).
-          CURRENT=$(git tag --sort=-version:refname | head -n1)
+          CURRENT=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -n1)
           CURRENT=${CURRENT#v}
           CURRENT=${CURRENT:-0.0.0}
+          if ! [[ "$CURRENT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::latest version tag is not semver: $CURRENT"
+            exit 1
+          fi
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
           case "$BUMP" in
             major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
