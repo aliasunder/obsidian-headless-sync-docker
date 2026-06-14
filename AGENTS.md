@@ -86,8 +86,10 @@ One concern per workflow file; all external actions are pinned to full commit SH
 - **`.github/workflows/scorecard.yml`** — OpenSSF Scorecard (`publish_results: false` until the
   grade is reviewed). SARIF → Security tab.
 - **`.github/workflows/manual_release.yml`** — `workflow_dispatch` only. Bumps from the latest
-  git tag, builds + pushes a multi-arch image to `ghcr.io` with SLSA provenance, and cuts a
-  GitHub release. There is **no** cron or merge-to-main publish — releases are manual.
+  git tag, builds + pushes a multi-arch image to `ghcr.io` with SLSA provenance, then generates
+  categorized release notes from Conventional Commit messages
+  (`.github/scripts/generate-notes.sh`), updates `CHANGELOG.md`, and cuts a GitHub release.
+  There is **no** cron or merge-to-main publish — releases are manual.
 - **`.github/dependabot.yml`** — weekly `github-actions` + `docker` updates (keeps the SHA pins
   and base image current).
 

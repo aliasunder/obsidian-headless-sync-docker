@@ -65,7 +65,10 @@ Conventions for the Dockerfile, s6-overlay services, and shell scripts live in
 Releases are cut by the maintainer via the **Manual Release** workflow (Actions
 tab → "Manual Release" → choose `patch`/`minor`/`major`). It bumps from the
 latest tag, builds and pushes a multi-arch image to GHCR with SLSA provenance,
-and creates a GitHub release. There is no cron or merge-to-main publish.
+generates categorized release notes from Conventional Commit messages, updates
+[`CHANGELOG.md`](CHANGELOG.md), and creates a GitHub release. There is no cron or
+merge-to-main publish — which is why PR titles should be Conventional Commits:
+on a squash merge the title becomes the changelog entry.
 
 ## License
 
