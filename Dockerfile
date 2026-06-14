@@ -4,6 +4,13 @@ ARG S6_OVERLAY_VERSION=3.2.2.0
 ARG TARGETARCH
 
 # ---------------------------------------------------------------------------
+# Apply Alpine security fixes at build time. Covers the window between an
+# Alpine security release and the next upstream node:lts-alpine rebuild, so
+# the published image doesn't carry already-patched base-package CVEs.
+# ---------------------------------------------------------------------------
+RUN apk upgrade --no-cache
+
+# ---------------------------------------------------------------------------
 # Install s6-overlay (static binaries – works on musl and glibc)
 # ---------------------------------------------------------------------------
 RUN apk add --no-cache --virtual .s6-deps xz \
