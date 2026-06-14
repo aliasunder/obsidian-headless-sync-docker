@@ -5,6 +5,13 @@ automatically by the release workflow from [Conventional Commit](https://www.con
 messages, and each version corresponds to a GitHub Release.
 
 
+
+## [0.1.1] — 2026-06-14
+
+### Features
+
+- Log sync startup context (device, conflict strategy, vault) (#3)
+
 ## [0.1.0] — 2026-06-14
 
 ### Features
