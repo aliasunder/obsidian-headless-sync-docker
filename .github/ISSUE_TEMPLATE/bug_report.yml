@@ -1,0 +1,77 @@
+name: Bug Report
+description: Report a bug with obsidian-headless-sync-docker
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Configure `.env` with '...'
+        2. Run `docker compose up -d`
+        3. See error '...' in `docker compose logs`
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened. Include container logs if available.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part is affected?
+      options:
+        - Docker image / build
+        - Sync setup (ob sync-setup / sync-config)
+        - s6-overlay startup
+        - Device name / conflict handling
+        - File ownership (PUID/PGID / volumes)
+        - Docs
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide your environment details.
+      value: |
+        - Container runtime + version (Docker / Podman):
+        - Image tag or digest:
+        - Host OS and architecture (amd64 / arm64):
+        - PUID / PGID:
+        - Mount type (named volume / bind mount):
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Any other context, screenshots, or log output.
+    validations:
+      required: false

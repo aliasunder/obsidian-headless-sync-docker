@@ -4,7 +4,7 @@
 
 **obsidian-headless-sync-docker** is a rootless Docker image that continuously syncs an [Obsidian](https://obsidian.md) vault using [obsidian-headless](https://github.com/obsidianmd/obsidian-headless), the official headless CLI for Obsidian Sync.
 
-- **Repository:** <https://github.com/Belphemur/obsidian-headless-sync-docker>
+- **Repository:** <https://github.com/aliasunder/obsidian-headless-sync-docker> (fork of [Belphemur/obsidian-headless-sync-docker](https://github.com/Belphemur/obsidian-headless-sync-docker))
 - **Base image:** `node:lts-alpine`
 - **Init system:** [s6-overlay v3](https://github.com/just-containers/s6-overlay)
 - **Supported platforms:** `linux/amd64`, `linux/arm64`
@@ -74,9 +74,24 @@ There are no automated tests. Validation is done by building the image and runni
 
 ## CI/CD
 
-- **`.github/workflows/ci.yml`** — Runs on every push to `main` and every PR. Builds the Docker image for both `linux/amd64` and `linux/arm64`, then runs a [Trivy](https://github.com/aquasecurity/trivy) vulnerability scan. SARIF results are uploaded to the GitHub Security tab automatically.
-- **`.github/workflows/check-obsidian-version.yml`** — Daily cron job that checks the `obsidian-headless` npm package for new versions. If a new version is found, it creates a git tag and triggers a build.
-- **`.github/workflows/docker-publish.yml`** — Reusable workflow that builds and pushes multi-arch images to `ghcr.io`. Runs on version tags and PRs (build-only for PRs).
+One concern per workflow file; all external actions are pinned to full commit SHAs with
+`# vX.Y.Z` comments.
+
+- **`.github/workflows/ci.yml`** — PR + push to `main`. Builds the image for `linux/amd64`
+  (loaded) and `linux/arm64` (build-only) to validate the Dockerfile on both arches.
+- **`.github/workflows/trivy.yml`** — [Trivy](https://github.com/aquasecurity/trivy) CVE scan.
+  `trivy-pr` gates PRs (fails on CRITICAL/HIGH); `trivy-published` scans the GHCR `:latest`
+  image (cron + push to `main`, report-only). SARIF → Security tab.
+- **`.github/workflows/gitleaks.yml`** — secret scan over full git history (PR + push to `main`).
+- **`.github/workflows/scorecard.yml`** — OpenSSF Scorecard (`publish_results: false` until the
+  grade is reviewed). SARIF → Security tab.
+- **`.github/workflows/manual_release.yml`** — `workflow_dispatch` only. Bumps from the latest
+  git tag, builds + pushes a multi-arch image to `ghcr.io` with SLSA provenance, then generates
+  categorized release notes from Conventional Commit messages
+  (`.github/scripts/generate-notes.sh`), updates `CHANGELOG.md`, and cuts a GitHub release.
+  There is **no** cron or merge-to-main publish — releases are manual.
+- **`.github/dependabot.yml`** — weekly `github-actions` + `docker` updates (keeps the SHA pins
+  and base image current).
 
 ## Conventions
 
@@ -86,7 +101,7 @@ There are no automated tests. Validation is done by building the image and runni
 - **`type` files** end with a newline.
 - **`up` files** contain a single command path referencing a script in `/etc/s6-overlay/scripts/`.
 - **Dependency files** are empty files whose *name* is the dependency.
-- **Image references** point to `ghcr.io/belphemur/obsidian-headless-sync-docker`.
+- **Image references** point to `ghcr.io/aliasunder/obsidian-headless-sync-docker`.
 
 ## Environment Variables
 

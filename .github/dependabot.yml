@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Keep the SHA-pinned actions current (Dependabot updates the pin + the
+  # trailing # vX.Y.Z comment together).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Watch the Dockerfile base image (node:lts-alpine) for updates.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly

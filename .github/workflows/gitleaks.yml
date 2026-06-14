@@ -1,0 +1,42 @@
+name: Gitleaks
+
+# Secret scan over the full git history — guards against an OBSIDIAN_AUTH_TOKEN,
+# vault password, or other credential being committed to the repo.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: gitleaks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Job ID doubles as the required-status-check context in the branch ruleset.
+  gitleaks:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.21.2
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false # read-only scan job — no git writes
+
+      - name: Install gitleaks
+        run: |
+          set -euo pipefail
+          ASSET="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          BASE_URL="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -fsSLO "${BASE_URL}/${ASSET}"
+          curl -fsSLO "${BASE_URL}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          # Verify the archive against the published checksum before extracting.
+          grep " ${ASSET}$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "${ASSET}" -C /usr/local/bin gitleaks
+
+      - name: Scan full git history
+        run: gitleaks detect --source . --log-opts="--all" --redact --verbose

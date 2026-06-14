@@ -7,12 +7,12 @@
 
 [Unit]
 Description=Obsidian Headless Sync
-Documentation=https://github.com/Belphemur/obsidian-headless-sync-docker
+Documentation=https://github.com/aliasunder/obsidian-headless-sync-docker
 After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=ghcr.io/belphemur/obsidian-headless-sync-docker:latest
+Image=ghcr.io/aliasunder/obsidian-headless-sync-docker:latest
 ContainerName=obsidian-sync
 Pull=newer
 AutoUpdate=registry
@@ -26,7 +26,7 @@ AutoUpdate=registry
 #   VAULT_NAME=My Vault
 #   VAULT_PASSWORD=
 #   DEVICE_NAME=obsidian-podman
-#   CONFLICT_STRATEGY=merge
+#   CONFLICT_STRATEGY=conflict
 #   EXCLUDED_FOLDERS=
 #   FILE_TYPES=
 #   SYNC_MODE=
@@ -41,7 +41,7 @@ Environment=VAULT_PATH=/vault
 Environment=PUID=0
 Environment=PGID=0
 Environment=DEVICE_NAME=obsidian-podman
-Environment=CONFLICT_STRATEGY=merge
+Environment=CONFLICT_STRATEGY=conflict
 Environment=EXCLUDED_FOLDERS=
 Environment=FILE_TYPES=
 Environment=SYNC_MODE=

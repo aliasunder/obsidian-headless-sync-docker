@@ -4,6 +4,13 @@ ARG S6_OVERLAY_VERSION=3.2.2.0
 ARG TARGETARCH
 
 # ---------------------------------------------------------------------------
+# Apply Alpine security fixes at build time. Covers the window between an
+# Alpine security release and the next upstream node:lts-alpine rebuild, so
+# the published image doesn't carry already-patched base-package CVEs.
+# ---------------------------------------------------------------------------
+RUN apk upgrade --no-cache
+
+# ---------------------------------------------------------------------------
 # Install s6-overlay (static binaries – works on musl and glibc)
 # ---------------------------------------------------------------------------
 RUN apk add --no-cache --virtual .s6-deps xz \
@@ -26,6 +33,13 @@ RUN apk add --no-cache --virtual .s6-deps xz \
 # ---------------------------------------------------------------------------
 RUN npm install -g obsidian-headless
 
+# Drop npm/npx/corepack/yarn — only the installed `ob` binary runs at runtime,
+# so removing them sheds their bundled dependencies' CVE surface. The
+# obsidian-headless package (and its deps) under node_modules is kept.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    /opt/yarn* /usr/local/bin/yarn /usr/local/bin/yarnpkg
+
 # ---------------------------------------------------------------------------
 # Runtime deps: shadow provides usermod/groupmod for PUID/PGID support
 # ---------------------------------------------------------------------------
@@ -39,7 +53,8 @@ RUN deluser --remove-home node || true; \
     delgroup node || true; \
     addgroup -g 1000 obsidian \
     && adduser -u 1000 -G obsidian -h /home/obsidian -s /bin/sh -D obsidian \
-    && mkdir -p /vault /home/obsidian/.config
+    && mkdir -p /vault /home/obsidian/.config \
+    && chown obsidian:obsidian /vault /home/obsidian/.config
 
 # ---------------------------------------------------------------------------
 # Copy s6-overlay service definitions, init scripts, and helper
