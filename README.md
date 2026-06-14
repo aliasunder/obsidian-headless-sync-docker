@@ -6,6 +6,13 @@ Built on [s6-overlay](https://github.com/just-containers/s6-overlay) for proper 
 
 **Requirements:** An active [Obsidian Sync](https://obsidian.md/sync) subscription.
 
+> **Fork notice.** This is a fork of [Belphemur/obsidian-headless-sync-docker](https://github.com/Belphemur/obsidian-headless-sync-docker), maintained for [vault-cortex](https://github.com/aliasunder/vault-cortex). It diverges from upstream in two ways:
+>
+> - **Build-time `chown`** of `/home/obsidian/.config` (and `/vault`) so Docker named-volume mounts are writable by the unprivileged `obsidian` user without a separate init container ([upstream PR #8](https://github.com/Belphemur/obsidian-headless-sync-docker/pull/8), still unmerged).
+> - **`--device-name` on the initial `ob sync-setup`** so the first Obsidian Sync device registers under `DEVICE_NAME` instead of the container hostname (otherwise every container recreation spawns a new Sync device).
+>
+> Images publish to `ghcr.io/aliasunder/obsidian-headless-sync-docker`. If upstream merges these fixes, this fork can be retired.
+
 ---
 
 ## Quick Start
@@ -16,10 +23,10 @@ Pull the image and run the interactive login helper. It will prompt for your Obs
 
 ```bash
 # Docker
-docker run --rm -it --entrypoint get-token ghcr.io/belphemur/obsidian-headless-sync-docker:latest
+docker run --rm -it --entrypoint get-token ghcr.io/aliasunder/obsidian-headless-sync-docker:latest
 
 # Podman
-podman run --rm -it --entrypoint get-token ghcr.io/belphemur/obsidian-headless-sync-docker:latest
+podman run --rm -it --entrypoint get-token ghcr.io/aliasunder/obsidian-headless-sync-docker:latest
 ```
 
 Copy the printed `OBSIDIAN_AUTH_TOKEN` value — you'll need it in step 3.
@@ -37,14 +44,14 @@ List the vaults available on your Obsidian Sync account:
 docker run --rm \
   -e OBSIDIAN_AUTH_TOKEN=your-token-here \
   --entrypoint ob \
-  ghcr.io/belphemur/obsidian-headless-sync-docker:latest \
+  ghcr.io/aliasunder/obsidian-headless-sync-docker:latest \
   sync-list-remote
 
 # Podman
 podman run --rm \
   -e OBSIDIAN_AUTH_TOKEN=your-token-here \
   --entrypoint ob \
-  ghcr.io/belphemur/obsidian-headless-sync-docker:latest \
+  ghcr.io/aliasunder/obsidian-headless-sync-docker:latest \
   sync-list-remote
 ```
 
@@ -120,7 +127,7 @@ Supported platforms: `linux/amd64`, `linux/arm64`.
 | `PGID` | No | `1000` | GID that will own synced files (see below) |
 | `VAULT_PATH` | No | `/vault` | In-container mount path (advanced) |
 | `DEVICE_NAME` | No | `obsidian-docker` | Label shown in Obsidian Sync history |
-| `CONFLICT_STRATEGY` | No | `merge` | `merge` or `conflict` |
+| `CONFLICT_STRATEGY` | No | `conflict` | `merge` or `conflict` — `conflict` writes a separate conflict file instead of silently merging |
 | `EXCLUDED_FOLDERS` | No | — | Comma-separated vault folders to skip |
 | `FILE_TYPES` | No | — | Extra types to sync: `image,audio,video,pdf,unsupported` |
 | `SYNC_MODE` | No | `bidirectional` | Sync mode: `bidirectional`, `pull-only`, or `mirror-remote` |
@@ -219,11 +226,11 @@ For the full reference see the [obsidian-headless `ob sync-config` documentation
 
 ### Pre-built (recommended)
 
-Images are published to the GitHub Container Registry on every push to `main` and on version tags. Multi-arch images are available for `linux/amd64` and `linux/arm64`.
+Multi-arch images (`linux/amd64`, `linux/arm64`) are published to the GitHub Container Registry on demand via the **Manual Release** workflow (`.github/workflows/manual_release.yml`), with SLSA build provenance attached.
 
 ```yaml
 # compose.yml already points to:
-image: ghcr.io/belphemur/obsidian-headless-sync-docker:latest
+image: ghcr.io/aliasunder/obsidian-headless-sync-docker:latest
 ```
 
 ### Build locally
@@ -264,7 +271,7 @@ Optional keys (defaults are set in the unit file):
 ```env
 VAULT_PASSWORD=
 DEVICE_NAME=obsidian-podman
-CONFLICT_STRATEGY=merge
+CONFLICT_STRATEGY=conflict
 EXCLUDED_FOLDERS=
 FILE_TYPES=
 SYNC_MODE=
@@ -350,4 +357,12 @@ Your vault files remain on disk at `VAULT_HOST_PATH`.
 
 ## License
 
-MIT
+The packaging in this repository (Dockerfile, s6-overlay scripts, compose/quadlet
+files, workflows, docs) is **MIT** — see [`LICENSE`](LICENSE). It builds on
+[Belphemur/obsidian-headless-sync-docker](https://github.com/Belphemur/obsidian-headless-sync-docker)
+(also MIT).
+
+The published image **bundles** [`obsidian-headless`](https://github.com/obsidianmd/obsidian-headless)
+(the `ob` CLI), which is **proprietary** — its `package.json` declares `"license": "UNLICENSED"`
+(© Dynalist Inc. / Obsidian). It is installed from public npm at build time; the MIT license here
+does **not** cover it, and using it requires an active Obsidian Sync subscription.
