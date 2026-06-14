@@ -13,5 +13,9 @@ if ! cd "$VAULT_PATH"; then
   exit 1
 fi
 
-echo "[obsidian-sync] Starting continuous sync..."
+# Startup context banner — surfaces which device/config this sync is running
+# under so an unexpected device (e.g. an unset DEVICE_NAME falling back to the
+# container hostname) is visible in `docker logs`. Never log the auth token or
+# vault password.
+echo "[obsidian-sync] Starting continuous sync — device=${DEVICE_NAME:-<container hostname>} conflict=${CONFLICT_STRATEGY:-<ob default>} vault=${VAULT_NAME:-<unset>} path=$VAULT_PATH"
 exec s6-setuidgid obsidian ob sync --continuous
