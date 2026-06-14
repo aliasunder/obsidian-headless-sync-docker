@@ -66,6 +66,17 @@ RUN chmod +x /usr/local/bin/get-token \
     && chmod +x /etc/s6-overlay/s6-rc.d/svc-obsidian-sync/run
 
 # ---------------------------------------------------------------------------
+# OCI image metadata. org.opencontainers.image.source links the published GHCR
+# package to this repository (same approach as vault-cortex's vault-mcp image);
+# manual_release.yml also sets these as index annotations so the multi-arch
+# package page picks them up.
+# ---------------------------------------------------------------------------
+LABEL org.opencontainers.image.title="obsidian-headless-sync-docker" \
+      org.opencontainers.image.description="Headless Obsidian Sync in Docker (fork) — build-time config chown + DEVICE_NAME on initial registration." \
+      org.opencontainers.image.source="https://github.com/aliasunder/obsidian-headless-sync-docker" \
+      org.opencontainers.image.licenses="MIT"
+
+# ---------------------------------------------------------------------------
 # Volumes: vault data + user config persistence (login state, etc.)
 # ---------------------------------------------------------------------------
 VOLUME ["/vault", "/home/obsidian/.config"]
