@@ -355,6 +355,12 @@ Your vault files remain on disk at `VAULT_HOST_PATH`.
 
 ---
 
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the build
+loop and PR process, and the [Code of Conduct](CODE_OF_CONDUCT.md). Please report
+security issues privately per the [Security Policy](SECURITY.md).
+
 ## License
 
 The packaging in this repository (Dockerfile, s6-overlay scripts, compose/quadlet
