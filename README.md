@@ -8,7 +8,7 @@ Built on [s6-overlay](https://github.com/just-containers/s6-overlay) for proper 
 
 > **Fork notice.** This is a fork of [Belphemur/obsidian-headless-sync-docker](https://github.com/Belphemur/obsidian-headless-sync-docker), maintained for [vault-cortex](https://github.com/aliasunder/vault-cortex). It diverges from upstream in two ways:
 >
-> - **Build-time `chown`** of `/home/obsidian/.config` (and `/vault`) so Docker named-volume mounts are writable by the unprivileged `obsidian` user without a separate init container ([upstream PR #8](https://github.com/Belphemur/obsidian-headless-sync-docker/pull/8), still unmerged).
+> - **Build-time `chown`** of `/home/obsidian/.config` (and `/vault`) so Docker named-volume mounts are writable by the unprivileged `obsidian` user without a separate init container (also proposed upstream as [PR #8](https://github.com/Belphemur/obsidian-headless-sync-docker/pull/8)).
 > - **`--device-name` on the initial `ob sync-setup`** so the first Obsidian Sync device registers under `DEVICE_NAME` instead of the container hostname (otherwise every container recreation spawns a new Sync device).
 >
 > Images publish to `ghcr.io/aliasunder/obsidian-headless-sync-docker`. If upstream merges these fixes, this fork can be retired.
