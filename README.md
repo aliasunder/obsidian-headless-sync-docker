@@ -94,6 +94,11 @@ Watch logs:
 docker compose logs -f
 ```
 
+The sync daemon's own output is not timestamped in the message text — add `-t`
+(`docker compose logs -f -t`) to have Docker prepend a timestamp to each line.
+On startup the service logs a context banner (device, conflict strategy, vault)
+so you can confirm which configuration the sync is running under.
+
 ---
 
 ## Architecture
