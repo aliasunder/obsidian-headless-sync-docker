@@ -14,7 +14,7 @@ services:
       # Optional overrides
       VAULT_PATH: ${VAULT_PATH:-/vault}
       DEVICE_NAME: ${DEVICE_NAME:-obsidian-docker}
-      CONFLICT_STRATEGY: ${CONFLICT_STRATEGY:-merge}
+      CONFLICT_STRATEGY: ${CONFLICT_STRATEGY:-conflict}
       EXCLUDED_FOLDERS: ${EXCLUDED_FOLDERS:-}
       FILE_TYPES: ${FILE_TYPES:-}
     volumes:
