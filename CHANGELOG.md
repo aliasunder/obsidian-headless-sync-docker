@@ -6,6 +6,13 @@ messages, and each version corresponds to a GitHub Release.
 
 
 
+
+## [0.1.2] — 2026-06-17
+
+### Bug Fixes
+
+- Pin Dockerfile dependencies and verify s6-overlay checksums (#4)
+
 ## [0.1.1] — 2026-06-14
 
 ### Features
