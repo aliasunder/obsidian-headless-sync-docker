@@ -1,12 +1,13 @@
-FROM node:lts-alpine
+FROM node:24-alpine@sha256:bc23e6976e92708e9eadae437d7dd180b3fd47ed75edf322d6cfa36eba4a7fc8
 
 ARG S6_OVERLAY_VERSION=3.2.2.0
+ARG OBSIDIAN_HEADLESS_VERSION=0.0.12
 ARG TARGETARCH
 
 # ---------------------------------------------------------------------------
 # Apply Alpine security fixes at build time. Covers the window between an
-# Alpine security release and the next upstream node:lts-alpine rebuild, so
-# the published image doesn't carry already-patched base-package CVEs.
+# Alpine security release and the next node:24-alpine rebuild, so the
+# published image doesn't carry already-patched base-package CVEs.
 # ---------------------------------------------------------------------------
 RUN apk upgrade --no-cache
 
@@ -19,19 +20,23 @@ RUN apk add --no-cache --virtual .s6-deps xz \
          arm64) echo aarch64;; \
          *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1;; \
        esac)" \
-    && wget -qO /tmp/s6-noarch.tar.xz \
-       "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" \
-    && wget -qO /tmp/s6-arch.tar.xz \
-       "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" \
-    && tar -C / -Jxpf /tmp/s6-noarch.tar.xz \
-    && tar -C / -Jxpf /tmp/s6-arch.tar.xz \
-    && rm -f /tmp/s6-*.tar.xz \
+    && S6_BASE="https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}" \
+    && wget -qO /tmp/s6-overlay-noarch.tar.xz "${S6_BASE}/s6-overlay-noarch.tar.xz" \
+    && wget -qO /tmp/s6-overlay-noarch.tar.xz.sha256 "${S6_BASE}/s6-overlay-noarch.tar.xz.sha256" \
+    && wget -qO /tmp/s6-overlay-${S6_ARCH}.tar.xz "${S6_BASE}/s6-overlay-${S6_ARCH}.tar.xz" \
+    && wget -qO /tmp/s6-overlay-${S6_ARCH}.tar.xz.sha256 "${S6_BASE}/s6-overlay-${S6_ARCH}.tar.xz.sha256" \
+    && cd /tmp \
+    && sha256sum -c s6-overlay-noarch.tar.xz.sha256 \
+    && sha256sum -c s6-overlay-${S6_ARCH}.tar.xz.sha256 \
+    && tar -C / -Jxpf s6-overlay-noarch.tar.xz \
+    && tar -C / -Jxpf s6-overlay-${S6_ARCH}.tar.xz \
+    && rm -f /tmp/s6-overlay-*.tar.xz /tmp/s6-overlay-*.sha256 \
     && apk del .s6-deps
 
 # ---------------------------------------------------------------------------
 # Install obsidian-headless CLI (requires Node 22+)
 # ---------------------------------------------------------------------------
-RUN npm install -g obsidian-headless
+RUN npm install -g obsidian-headless@${OBSIDIAN_HEADLESS_VERSION}
 
 # Drop npm/npx/corepack/yarn — only the installed `ob` binary runs at runtime,
 # so removing them sheds their bundled dependencies' CVE surface. The
@@ -47,7 +52,7 @@ RUN apk add --no-cache shadow
 
 # ---------------------------------------------------------------------------
 # Create default non-root user (UID/GID adjustable at runtime via PUID/PGID)
-# node:lts-alpine ships a 'node' user/group at UID/GID 1000 — remove it first
+# node:*-alpine ships a 'node' user/group at UID/GID 1000 — remove it first
 # ---------------------------------------------------------------------------
 RUN deluser --remove-home node || true; \
     delgroup node || true; \
