@@ -1,4 +1,4 @@
-FROM node:24-alpine@sha256:bc23e6976e92708e9eadae437d7dd180b3fd47ed75edf322d6cfa36eba4a7fc8
+FROM node:25-alpine@sha256:bdf2cca6fe3dabd014ea60163eca3f0f7015fbd5c7ee1b0e9ccb4ced6eb02ef4
 
 ARG S6_OVERLAY_VERSION=3.2.2.0
 ARG OBSIDIAN_HEADLESS_VERSION=0.0.12
