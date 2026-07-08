@@ -26,6 +26,14 @@
 ├── Dockerfile                  # Multi-arch rootless image with s6-overlay
 ├── compose.yml                 # Docker Compose configuration
 ├── .env.example                # Environment variable template
+├── CLAUDE.md                   # Claude-specific tips (links to AGENTS.md)
+├── .github/                    # CI/CD workflows, Dependabot
+├── SECURITY.md                 # Security policy
+├── CHANGELOG.md                # Release history
+├── CONTRIBUTING.md             # Contribution guide
+├── CODE_OF_CONDUCT.md          # Code of conduct
+├── .gitleaks.toml              # Secret detection config
+├── .gitignore                  # Ignored files
 ├── get-token.sh                # Interactive login helper (run with --entrypoint)
 ├── obsidian-sync.container     # Podman Quadlet systemd unit
 ├── rootfs/                     # Filesystem overlay copied into the image
