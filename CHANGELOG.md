@@ -7,6 +7,40 @@ messages, and each version corresponds to a GitHub Release.
 
 
 
+
+## [0.1.3] — 2026-07-08
+
+### Bug Fixes
+
+- Only show error if related to encryption
+- Include /vault in build-time chown for entrypoint-bypass consistency
+- Chown /home/obsidian/.config at build time so named-volume mounts inherit obsidian ownership
+
+### Documentation
+
+- Update README and AGENTS.md for maintained fork status (#15)
+- Document $ escaping needed for VAULT_PASSWORD in .env
+
+### Maintenance
+
+- Remove upstream update-docker-image workflow
+- **deps:** Bump github/codeql-action/upload-sarif (#14)
+- **deps:** Bump docker/setup-buildx-action from 4.1.0 to 4.2.0 (#13)
+- **deps:** Bump docker/build-push-action from 7.2.0 to 7.3.0 (#12)
+- **deps:** Bump docker/setup-qemu-action from 4.1.0 to 4.2.0 (#11)
+- **deps:** Bump docker/login-action from 4.2.0 to 4.4.0 (#10)
+- **deps:** Bump node from `bc23e69` to `a0b9bf0` (#9)
+- **deps:** Bump actions/attest-build-provenance from 4.1.0 to 4.1.1 (#8)
+- **deps:** Bump actions/checkout from 6.0.3 to 7.0.0 (#6)
+
+### Other Changes
+
+- Potential fix for pull request finding 'CodeQL / Workflow does not contain permissions'
+- Add workflow to rebuild docker image on rootfs/Dockerfile changes
+- Initial plan
+- Add CONFIG_DIR_NAME support and fix missing compose env passthrough
+- Initial plan
+
 ## [0.1.2] — 2026-06-17
 
 ### Bug Fixes
