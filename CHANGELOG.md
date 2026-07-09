@@ -8,6 +8,13 @@ messages, and each version corresponds to a GitHub Release.
 
 
 
+
+## [0.1.4] — 2026-07-09
+
+### Bug Fixes
+
+- Drop duplicated sync-setup token in init-setup-vault (#16)
+
 ## [0.1.3] — 2026-07-08
 
 ### Bug Fixes
